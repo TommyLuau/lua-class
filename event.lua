@@ -15,16 +15,13 @@ local function uuid()
 end
 
 function connections.new(id)
-    local connection = {}
+    local self = {}
 
-    connection.id = id or uuid()
-    connection.f = nil
+    self.id = id or uuid()
+    self.f = nil
+    self.fireOnDisconnect = false
 
-    function connection:disconnect()
-        self.connection = nil
-    end
-
-    return setmetatable(connection, connections)
+    return setmetatable(self, connections)
 end
 
 return function(event_name)
@@ -50,6 +47,7 @@ return function(event_name)
         connection.event = self
 
         function connection:disconnect()
+            self.f = nil
             self.connection[id] = nil
         end
 
@@ -57,9 +55,26 @@ return function(event_name)
         return connection
     end
 
-    function self:fire()
-        for _,f in pairs(self.connections) do f.connection()end
+    function self:disconnect(id)
+        for _,connection in pairs(self.connections) do
+            connection
+        end
     end
 
-    return setmetatable(self, events)
+    function self:fire(id)
+        if not id then
+            for _,f in pairs(self.connections) do f.connection()end
+        else
+            self.connections[id].f()
+        end
+    end
+    
+    function self:remove()
+        events[#events]
+    end
+
+    self = setmetatable(self, events)
+    events[#events+1] = self
+
+    return self
 end
