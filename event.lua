@@ -33,23 +33,21 @@ return function(event_name)
     self.name = event_name
     self.connections = {}
 
-    function self:terminateConnection(connectionId)
-        if not connectionId then error('Connection ID has not been provided.') end        
-        if not self.connections[connectionId] then error("Invalid Connection ID") end
-    end
-
     function self:terminateAllConnections()
         local numConnections = #self.connections
         for i = 0, numConnections do self.connections[i] = nil end
     end
 
     function self:getConnections()
-        
+        return self.connections
     end
 
-    function self:connect(id, priority)
+    function self:connect(f, id, priority)
         local connection = connections.new(id)
         id = id or tostring(#self.connections+1)
+
+        connection.f = f
+        connection.event = self
 
         function connection:disconnect()
             self.connection[id] = nil
