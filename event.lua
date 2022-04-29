@@ -14,13 +14,17 @@ local function uuid()
     end)
 end
 
-local function newConnection(id)
-    local self = {}
+function connections.new(id)
+    local connection = {}
 
-    self.id = id or uuid()
-    self.connection = nil
+    connection.id = id or uuid()
+    connection.f = nil
 
-    return setmetatable(self, connections)
+    function connection:disconnect()
+        self.connection = nil
+    end
+
+    return setmetatable(connection, connections)
 end
 
 return function(event_name)
@@ -32,7 +36,6 @@ return function(event_name)
     function self:terminateConnection(connectionId)
         if not connectionId then error('Connection ID has not been provided.') end        
         if not self.connections[connectionId] then error("Invalid Connection ID") end
-
     end
 
     function self:terminateAllConnections()
@@ -42,6 +45,22 @@ return function(event_name)
 
     function self:getConnections()
         
+    end
+
+    function self:connect(id, priority)
+        local connection = connections.new(id)
+        id = id or tostring(#self.connections+1)
+
+        function connection:disconnect()
+            self.connection[id] = nil
+        end
+
+        self.connections[id] = connection
+        return connection
+    end
+
+    function self:fire()
+        for _,f in pairs(self.connections) do f.connection()end
     end
 
     return setmetatable(self, events)
